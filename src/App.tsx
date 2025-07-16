@@ -30,13 +30,15 @@ function App()  {
   }, [servPath]);
 
   return (
-      servInfo && (
+    <main className="container">
+      {servInfo && (
         <iframe
           src={`http://localhost:${servInfo.port}/index.html`}
           style={{ width: '100%', height: '100%', border: 'none' }}
           title="external-content"
         />
-      )
+      )}
+    </main>
   )
 }
 
