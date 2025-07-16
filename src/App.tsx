@@ -29,15 +29,18 @@ function App()  {
     }
   }, [servPath]);
 
+  useEffect(() => {
+    if (servInfo) {
+      fetch(`http://localhost:${servInfo.port}/menu/menu_26989041.json`)
+        .then((res) => res.json())
+        .then((json) => {
+          console.log(json);
+        })
+    }
+  }, [servInfo]);
+
   return (
     <main className="container">
-      {servInfo && (
-        <iframe
-          src={`http://localhost:${servInfo.port}/index.html`}
-          style={{ width: '100%', height: '100%', border: 'none' }}
-          title="external-content"
-        />
-      )}
     </main>
   )
 }

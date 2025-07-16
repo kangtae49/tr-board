@@ -35,5 +35,5 @@ pnpm tauri build
 
 
 ```sh
-pnpm tauri dev -- -- "C:\sources\crawler_data"
+pnpm tauri dev -- -- "C:\sources\scraping_data"
 ```

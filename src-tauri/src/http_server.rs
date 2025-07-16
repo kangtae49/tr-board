@@ -5,6 +5,8 @@ use axum::{Router};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use tower_http::services::ServeDir;
+use tower_http::cors::{CorsLayer, Any};
+
 use specta::Type;
 use crate::error::Result;
 
@@ -39,13 +41,18 @@ pub async fn run(serv_info: ServInfo) -> Result<HttpServerHandle> {
         let resource = abs.clone();
         let index_path = format!("{}/index.html", &abs);
         println!("index_path: {}", &index_path);
-        // let index_html = fs::read_to_string(index_path).unwrap_or_else(|_| "not exist index.html".to_string());
-        // let html = index_html.clone();
+
+        let cors = CorsLayer::new()
+            .allow_origin(Any)
+            .allow_methods([http::Method::GET, http::Method::HEAD, http::Method::POST, http::Method::PUT, http::Method::DELETE]);
+
+        let serv_dir = ServeDir::new(resource);
         let app = Router::new()
             // .route("/", get(move || async move {
             //     axum::response::Html(html)
             // }))
-            .fallback_service(ServeDir::new(resource))
+            .fallback_service(serv_dir)
+            .layer(cors)
             ;
 
         let listener = tokio::net::TcpListener::bind(format!("{}:{}", serv_info.ip, serv_info.port)).await.unwrap();
