@@ -1,6 +1,7 @@
+use std::path::absolute;
 use std::sync::Arc;
 use tokio::sync::{oneshot, Mutex};
-use axum::{Router, routing::get};
+use axum::{Router};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use tower_http::services::ServeDir;
@@ -25,18 +26,25 @@ pub struct ServInfo {
 }
 
 pub async fn run(serv_info: ServInfo) -> Result<HttpServerHandle> {
+    println!("run: {:?}", serv_info);
     let (tx, rx) = oneshot::channel();
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
-    let shutdown_tx = Arc::new(Mutex::new(Some(shutdown_tx)));
-    let shutdown_rx = shutdown_rx;
+    let shared_shutdown_tx = Arc::new(Mutex::new(Some(shutdown_tx)));
     tokio::spawn(async move {
-        let serv_path = std::fs::canonicalize(serv_info.path).unwrap();
+
+        let serv_path = absolute(serv_info.path).unwrap();
+        println!("serv_path: {}", &serv_path.to_string_lossy().to_string());
         let abs = serv_path.to_string_lossy().to_string();
-        let root = abs.clone();
         let resource = abs.clone();
+        let index_path = format!("{}/index.html", &abs);
+        println!("index_path: {}", &index_path);
+        // let index_html = fs::read_to_string(index_path).unwrap_or_else(|_| "not exist index.html".to_string());
+        // let html = index_html.clone();
         let app = Router::new()
-            .route("/", get(move || async move { format!("{}", root) }))
+            // .route("/", get(move || async move {
+            //     axum::response::Html(html)
+            // }))
             .fallback_service(ServeDir::new(resource))
             ;
 
@@ -50,7 +58,6 @@ pub async fn run(serv_info: ServInfo) -> Result<HttpServerHandle> {
                         println!("shutdown: {:?}", serv_info);
                     },
                     Err(e) => {
-
                         println!("shutdown: {:?}", e);
                     },
                 }
@@ -61,6 +68,6 @@ pub async fn run(serv_info: ServInfo) -> Result<HttpServerHandle> {
     let ret = rx.await?;
     Ok(HttpServerHandle{
         serv_info: ret,
-        shutdown_tx,
+        shutdown_tx: shared_shutdown_tx
     })
 }

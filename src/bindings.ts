@@ -5,6 +5,14 @@
 
 
 export const commands = {
+async getArgPath() : Promise<Result<string, ApiError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_arg_path") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async runHttpServer(servInfo: ServInfo) : Promise<Result<ServInfo, ApiError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("run_http_server", { servInfo }) };

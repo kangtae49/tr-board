@@ -33,3 +33,7 @@ pnpm tauri android dev
 pnpm tauri build
 ```
 
+
+```sh
+pnpm tauri dev -- -- "C:\sources\crawler_data"
+```

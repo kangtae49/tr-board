@@ -1,40 +1,43 @@
+// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 import {useEffect, useState} from "react";
-// import reactLogo from "./assets/react.svg";
-// import { invoke } from "@tauri-apps/api/core";
-// import "./App.css";
-import {runHttpServer} from "@/api"
-import {ServInfo} from "@/bindings"
+import {runHttpServer, getArgPath} from "@/api"
+import {ServInfo} from "@/bindings.ts";
+import './App.css';
 
 function App()  {
+  const [servPath, setServPath] = useState<string | undefined>(undefined);
   const [servInfo, setServInfo] = useState<ServInfo | undefined>(undefined);
 
-  // const run = async ():Promise<void> => {
-  //   runHttpServer().then(setServInfo);
-  // }
+  useEffect(() => {
+    getArgPath().then((path) => {
+        setServPath(path);
+      })
+      .catch((_e) => {
+        setServPath(".")
+      })
+  }, []);
 
   useEffect(() => {
-    runHttpServer().then(setServInfo);
-  }, []);
-  // const [greetMsg, setGreetMsg] = useState("");
-  // const [name, setName] = useState("");
-  //
-  // async function greet() {
-  //   // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-  //   setGreetMsg(await invoke("greet", { name }));
-  // }
+    if (servPath) {
+      runHttpServer({
+        path: servPath,
+        port: 0,
+        ip: '127.0.0.1'
+      }).then((servInfo) => {
+        setServInfo(servInfo);
+      });
+    }
+  }, [servPath]);
 
   return (
-    <main className="container">
-      {
-        servInfo && (
-          <>
-            <div><a href={`http://${servInfo.ip}:${servInfo.port}`} target="_blank">{servInfo.ip}:{servInfo.port}</a></div>
-            <div>{servInfo.path}</div>
-          </>
-        )
-      }
-    </main>
-  );
+      servInfo && (
+        <iframe
+          src={`http://localhost:${servInfo.port}/index.html`}
+          style={{ width: '100%', height: '100%', border: 'none' }}
+          title="external-content"
+        />
+      )
+  )
 }
 
 export default App;

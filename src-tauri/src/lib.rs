@@ -1,12 +1,13 @@
 mod http_server;
 mod error;
 
+use std::path::absolute;
 use std::sync::Arc;
-use tauri::{AppHandle, Manager, State, Window};
+use tauri::{Manager, State};
 use tauri_specta::{collect_commands, Builder};
 use tokio::sync::{oneshot, Mutex, RwLock};
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-use crate::error::{ Result };
+use crate::error::{ApiError, Result};
 use crate::http_server::{ServInfo};
 
 
@@ -28,17 +29,28 @@ async fn run_http_server(state: State<'_, Arc<RwLock<AppState>>>, serv_info: Ser
     Ok(handle.serv_info)
 }
 
-// #[tauri::command]
-// fn greet(name: &str) -> String {
-//     format!("Hello, {}! You've been greeted from Rust!", name)
-// }
-
+#[tauri::command]
+#[specta::specta]
+async fn get_arg_path() -> Result<String> {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() > 1 {
+        match absolute(&args[1]) {
+            Ok(path) => Ok(path.to_string_lossy().to_string()),
+            Err(e) => {
+                println!("{:?}", e);
+                Err(e.into())
+            }
+        }
+    } else {
+        Err(ApiError::Error("arg_path_error".to_string()))
+    }
+}
 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
     let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
-        // greet,
+        get_arg_path,
         run_http_server
     ]);
 
